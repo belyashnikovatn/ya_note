@@ -13,12 +13,13 @@ User = get_user_model()
 class TestRoutes(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Leya')
+        cls.owner = User.objects.create(username='Leya')
+        cls.unknown = User.objects.create(username='Darth')
         cls.note = Note.objects.create(
             title='Name',
             text='Text',
             slug='slug1',
-            author=cls.author,
+            author=cls.owner,
         )
 
     def test_pages_availability(self):
@@ -31,8 +32,28 @@ class TestRoutes(TestCase):
         )
         for name, args in urls:
             with self.subTest(name=name):
-                # Передаём имя и позиционный аргумент в reverse()
-                # и получаем адрес страницы для GET-запроса:
                 url = reverse(name, args=args)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_availability_for_crud_pages(self):
+        users_statuses = (
+            (self.owner, HTTPStatus.OK),
+            (self.unknown, HTTPStatus.NOT_FOUND),
+        )
+        urls = (
+            'notes:detail',
+            'notes:edit',
+            'notes:delete',
+            # 'notes:list'
+        )
+        for user, status in users_statuses:
+            self.client.force_login(user)
+            for name in urls:
+                with self.subTest(user=user, name=name):
+                    url = reverse(name, args=(self.note.slug,))
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, status)
+
+    def test_redirect_for_anonymous_client(self):
+        
