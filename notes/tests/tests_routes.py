@@ -56,4 +56,16 @@ class TestRoutes(TestCase):
                     self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous_client(self):
-        
+        login_url = reverse('users:login')
+        urls = (
+            'notes:detail',
+            'notes:edit',
+            'notes:delete',
+            # 'notes:list'
+        )
+        for name in urls:
+            with self.subTest(name=name):
+                url = reverse(name, args=(self.note.slug,))
+                redirect_url = f'{login_url}?next={url}'
+                response = self.client.get(url)
+                self.assertRedirects(response, redirect_url)
