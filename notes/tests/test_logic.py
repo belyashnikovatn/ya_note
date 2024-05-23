@@ -54,7 +54,7 @@ class TestNoteCreation(TestCase):
 
 
 class TestNoteEditDelete(TestCase):
-    title, text, slug = 'title', 'text', 'slug0'
+    title, text, slug, new = 'title', 'text', 'slug0', 'new'
 
     @classmethod
     def setUpTestData(cls):
@@ -76,9 +76,9 @@ class TestNoteEditDelete(TestCase):
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
         cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
         cls.form_data = {
-            'title': cls.title,
-            'text': cls.text,
-            'slug': cls.slug
+            'title': cls.title + cls.new,
+            'text': cls.text + cls.new,
+            'slug': cls.slug + cls.new
         }
 
     def test_owner_can_delete_note(self):
@@ -92,5 +92,20 @@ class TestNoteEditDelete(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
-    
-    
+
+    def test_owner_can_edit_note(self):
+        response = self.owner_client.post(self.edit_url, data=self.form_data)
+        self.assertRedirects(response, reverse('notes:success'))
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.text, self.text + self.new)
+        self.assertEqual(self.note.title, self.title + self.new)
+        self.assertEqual(self.note.slug, self.slug + self.new)
+
+    def test_not_owner_cant_edit_note_of_owner(self):
+        response = self.not_owner_client.post(self.edit_url,
+                                              data=self.form_data)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.text, self.text)
+        self.assertEqual(self.note.title, self.title)
+        self.assertEqual(self.note.slug, self.slug)
