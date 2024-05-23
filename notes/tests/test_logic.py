@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.test import TestCase, Client
 
 from notes.models import Note
+from notes.forms import WARNING
 
 User = get_user_model()
 
@@ -39,4 +40,15 @@ class TestNoteCreation(TestCase):
         self.assertEqual(note.text, self.text)
         self.assertEqual(note.slug, self.slug)
 
-     def test_user_cant_use_same_slug(self):
+    def test_user_cant_use_same_slug(self):
+        response = self.auth_client.post(self.url, data=self.form_data)
+        response = self.auth_client.post(self.url, data=self.form_data)
+        self.assertFormError(
+            response,
+            form='form',
+            field='slug',
+            errors=self.slug + WARNING
+        )
+        notes_count = Note.objects.count()
+        self.assertEqual(notes_count, 1)
+        
