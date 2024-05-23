@@ -51,4 +51,46 @@ class TestNoteCreation(TestCase):
         )
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
-        
+
+
+class TestNoteEditDelete(TestCase):
+    title, text, slug = 'title', 'text', 'slug0'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create(username='Elsa')
+        cls.owner_client = Client()
+        cls.owner_client.force_login(cls.owner)
+
+        cls.not_owner = User.objects.create(username='Olaf')
+        cls.not_owner_client = Client()
+        cls.not_owner_client.force_login(cls.not_owner)
+
+        cls.note = Note.objects.create(
+            title=cls.title,
+            text=cls.text,
+            slug=cls.slug,
+            author=cls.owner
+        )
+
+        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
+        cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
+        cls.form_data = {
+            'title': cls.title,
+            'text': cls.text,
+            'slug': cls.slug
+        }
+
+    def test_owner_can_delete_note(self):
+        response = self.owner_client.delete(self.delete_url)
+        self.assertRedirects(response, reverse('notes:success'))
+        notes_count = Note.objects.count()
+        self.assertEqual(notes_count, 0)
+
+    def test_not_owner_cant_delete_note_of_owner(self):
+        response = self.not_owner_client.delete(self.delete_url)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        notes_count = Note.objects.count()
+        self.assertEqual(notes_count, 1)
+    
+    
