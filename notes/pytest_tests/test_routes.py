@@ -6,9 +6,9 @@ from django.urls import reverse
 
 @pytest.mark.parametrize(
     'name',
-    ('notes:list', 'users:add', 'users:success')
+    ('notes:list', 'notes:add', 'notes:success')
 )
-def test_home_availability_for_auth_user(not_author_client, name):
+def test_pages_availability_for_auth_user(not_author_client, name):
     url = reverse(name)
     response = not_author_client.get(url)
     assert response.status_code == HTTPStatus.OK
@@ -16,8 +16,9 @@ def test_home_availability_for_auth_user(not_author_client, name):
 
 @pytest.mark.parametrize(
     'name',
-    ('notes:detail', 'users:edit', 'users:delete')
+    ('notes:detail', 'notes:edit', 'notes:delete'),
 )
 def test_pages_availability_for_author(author_client, name, note):
-    url = reverse(name, args=(note.slug),)
+    url = reverse(name, args=(note.slug,))
     response = author_client.get(url)
+    assert response.status_code == HTTPStatus.OK

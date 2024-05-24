@@ -31,9 +31,9 @@ def not_author_client(not_author):
 @pytest.fixture
 def note(author):
     note = Note.objects.create(
-        title='Good Title',
-        text='Simple text',
-        slug='Slug0',
+        title='Заголовок',
+        text='Текст заметки',
+        slug='note-slug',
         author=author,
     )
     return note
