@@ -35,6 +35,12 @@ class TestHomePage(TestCase):
             for index in range(cls.NOTES_COUNT)
         ]
         Note.objects.bulk_create(author_notes + another_author_notes)
+        cls.note = Note.objects.create(
+            title='Name',
+            text='Text',
+            slug='slug101',
+            author=cls.author,
+        )
 
     def test_count_authors_notes(self):
         """Check count of all users notes"""
@@ -42,9 +48,9 @@ class TestHomePage(TestCase):
         response = self.client.get(self.HOME_URL)
         object_list = response.context['object_list']
         notes_count = object_list.count()
-        self.assertEqual(notes_count, self.NOTES_COUNT)
+        self.assertEqual(notes_count, self.NOTES_COUNT + 1)
 
-    def test_only_authors_notes(self):
+    def test_only_authors_notes_and_have_context(self):
         """Check only this author notes"""
         self.client.force_login(self.author)
         response = self.client.get(self.HOME_URL)
@@ -58,5 +64,12 @@ class TestHomePage(TestCase):
     def test_authorized_client_has_form(self):
         self.client.force_login(self.author)
         response = self.client.get(reverse('notes:add'))
+        self.assertIn('form', response.context)
+        self.assertIsInstance(response.context['form'], NoteForm)
+
+    def test_authorized_client_has_edit_form(self):
+        self.client.force_login(self.author)
+        response = self.client.get(reverse('notes:edit',
+                                           args=(self.note.slug,)))
         self.assertIn('form', response.context)
         self.assertIsInstance(response.context['form'], NoteForm)
