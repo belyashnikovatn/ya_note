@@ -48,6 +48,7 @@ class TestHomePage(TestCase):
         """Check only this author notes"""
         self.client.force_login(self.author)
         response = self.client.get(self.HOME_URL)
+        self.assertIn('object_list', response.context)
         object_list = response.context['object_list']
         all_slugs = [note.slug for note in object_list]
         author_notes = Note.objects.filter(author=self.author)
